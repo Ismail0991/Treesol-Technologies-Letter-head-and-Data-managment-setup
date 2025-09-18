@@ -103,19 +103,11 @@
                 <p><span class="font-semibold text-gray-600">📅 End:</span> {{ internee.end }}</p>
               </div>
               <!-- Actions -->
-              <!-- Actions -->
-<div class="flex flex-col md:flex-row gap-2 mt-3 md:mt-0 md:ml-6">
-  <a href="{{ url_for('edit_internee', id=internee.id) }}" class="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 text-sm shadow text-center">✏️ Edit</a>
-  <a href="{{ url_for('delete_internee', id=internee.id) }}" class="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 text-sm shadow text-center">🗑️ Delete</a>
-
-  <!-- Letter (POST-only) -->
-  <form method="POST" action="{{ url_for('generate_letter', id=internee.id) }}">
-    <button type="submit" class="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 text-sm shadow text-center">
-      ✉️ Letter
-    </button>
-  </form>
-</div>
-
+              <div class="flex flex-col md:flex-row gap-2 mt-3 md:mt-0 md:ml-6">
+                <a href="{{ url_for('edit_internee', id=internee.id) }}" class="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 text-sm shadow text-center">✏️ Edit</a>
+                <a href="{{ url_for('delete_internee', id=internee.id) }}" class="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 text-sm shadow text-center">🗑️ Delete</a>
+                <button onclick="openModal('{{ internee.id }}')" class="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 text-sm shadow">✉️ Letter</button>
+              </div>
             </div>
           </div>
 
