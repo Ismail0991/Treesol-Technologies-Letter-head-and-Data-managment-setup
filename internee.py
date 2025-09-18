@@ -1,16 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session
 from google.cloud import firestore
 from datetime import datetime
-from docx import Document
-from docx.shared import Pt, Inches
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 import os
-import mammoth
-import pdfkit
-import base64
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
+
 # Firestore client
 db = firestore.Client.from_service_account_json("traineedata-a1379-8c9c23dd84c8.json")
 
@@ -56,6 +53,7 @@ def index():
     internees = []
     today = datetime.today().date()
     is_direct_open = request.referrer is None or request.referrer.endswith(request.host_url)
+
     for doc in docs:
         d = doc.to_dict()
         d["id"] = doc.id
@@ -68,6 +66,7 @@ def index():
             except Exception as e:
                 print("Date parse error:", e)
         internees.append(d)
+
     return render_template("index.html", internees=internees)
 
 # -------------------------
@@ -119,7 +118,7 @@ def delete_internee(id):
     return redirect(url_for("index"))
 
 # -------------------------
-# Generate internship completion letter (PDF)
+# Generate internship completion letter (PDF) using ReportLab
 # -------------------------
 @app.route("/letter/<id>", methods=["POST"])
 def generate_letter(id):
@@ -127,78 +126,81 @@ def generate_letter(id):
     if not internee:
         flash("❌ Internee not found!", "danger")
         return redirect(url_for("index"))
-    start = internee["start"]
-    end = internee["end"]
-    # Create DOCX document
-    doc = Document()
-    # Logo
-    if os.path.exists("static/s1.png"):
-        p = doc.add_paragraph()
-        p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        r = p.add_run()
-        r.add_picture("static/s1.png", width=Inches(5.0))
-    doc.add_paragraph("")  # spacing
-    # Body text
-    body = doc.add_paragraph()
-    body.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
-    run = body.add_run("We are pleased to confirm that ")
-    run.font.size = Pt(12)
-    run_name = body.add_run(f"{internee['name']} ")
-    run_name.bold = True
-    run_name.font.size = Pt(12)
-    run2 = body.add_run(f"Son/Daughter of {internee['father']} worked as a ")
-    run2.font.size = Pt(12)
-    run_field = body.add_run(f"{internee['field']} Intern ")
-    run_field.bold = True
-    run_field.font.size = Pt(12)
-    run3 = body.add_run(
-        f"in our firm TreeSol Technologies PVT Ltd. "
-        f"He/She has completed his/her internship from {start} to {end}. "
-        f"During the internship, he/she demonstrated good {internee['field']} skills with a self-motivated attitude "
-        f"to learn new things. We wish him/her all the best for his/her future endeavours.\n"
-        f"Warm Regards"
-    )
-    run3.font.size = Pt(12)
-    doc.add_paragraph("Issued on: " + datetime.today().strftime("%d-%m-%Y"))
-    # Stamp
-    if os.path.exists("static/stamp.png"):
-        p = doc.add_paragraph()
-        p.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
-        r = p.add_run()
-        r.add_picture("static/stamp.png", width=Inches(1.2))
-    # Footer
-    if os.path.exists("static/s2.png"):
-        section = doc.sections[0]
-        footer = section.footer
-        p = footer.paragraphs[0]
-        p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        r = p.add_run()
-        r.add_picture("static/s2.png", width=Inches(6.5))
-    # Save DOCX
+
     letters_dir = "letters"
     os.makedirs(letters_dir, exist_ok=True)
-    filename_docx = f"internship_letter_{internee['name'].replace(' ', '_')}.docx"
-    filepath_docx = os.path.join(letters_dir, filename_docx)
-    doc.save(filepath_docx)
-    # Convert DOCX → HTML → PDF using mammoth + pdfkit
-    with open(filepath_docx, "rb") as f:
-        result = mammoth.convert_to_html(f)
-    html = result.value
-    # Add footer image to HTML
-    if os.path.exists("static/s2.png"):
-        with open("static/s2.png", "rb") as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-        footer_img = f'<div style="position: fixed; bottom: 0; width: 100%; text-align: center;"><img src="data:image/png;base64,{encoded_string}" style="width: 6.5in;"></div>'
-        html += footer_img
-    filename_pdf = filepath_docx.replace(".docx", ".pdf")
-    filepath_pdf = filename_pdf
-    # You need wkhtmltopdf installed for pdfkit
-    pdfkit.from_string(html, filepath_pdf)
+    filepath_pdf = os.path.join(letters_dir, f"{internee['name'].replace(' ', '_')}_letter.pdf")
+
+    c = canvas.Canvas(filepath_pdf, pagesize=A4)
+    width, height = A4
+    margin = 50
+    y = height - margin
+
+    # -------------------------
+    # Header Image (s4.png)
+    # -------------------------
+    header_path = "static/s4.png"
+    if os.path.exists(header_path):
+        c.drawImage(header_path, margin - 55, y - 100, width=width + 20, preserveAspectRatio=True, mask='auto')
+        y -= 120  # space below header
+
+    # -------------------------
+    # Stamp Image (stamp.png)
+    # -------------------------
+    stamp_path = "static/stamp.png"
+    if os.path.exists(stamp_path):
+    # Example: place stamp near bottom-right above footer
+        stamp_width = 100  # adjust size as needed
+        stamp_height = 100  # adjust height proportionally if needed
+        c.drawImage(stamp_path, width - stamp_width - 20, 130, width=stamp_width, height=stamp_height, preserveAspectRatio=True, mask='auto')
+
+
+    # -------------------------
+    # Title
+    # -------------------------
+    c.setFont("Helvetica-Bold", 16)
+    c.drawCentredString(width/2, y, "Internship Completion Letter")
+    y -= 50
+
+    # -------------------------
+    # Body Text
+    # -------------------------
+    c.setFont("Helvetica", 12)
+    text_lines = [
+        f"This is to certify that {internee['name']},",
+        f"Son/Daughter of {internee['father']},",
+        f"worked as a {internee['field']} Intern at TreeSol Technologies PVT Ltd.",
+        f"from {internee['start']} to {internee['end']}.",
+        "During the internship, he/she demonstrated good skills with a self-motivated attitude",
+        "to learn new things.",
+        "We wish him/her all the best for his/her future endeavors.",
+        "",
+        f"Issued on: {datetime.today().strftime('%d-%m-%Y')}",
+        "",
+        "Warm Regards,",
+        "TreeSol Technologies PVT Ltd."
+    ]
+
+    for line in text_lines:
+        c.drawString(margin, y, line)
+        y -= 20
+
+    # -------------------------
+    # Footer Image (s3.png)
+    # -------------------------
+    footer_path = "static/s3.png"
+    if os.path.exists(footer_path):
+        c.drawImage(footer_path, -20, -80, width=width + 20, preserveAspectRatio=True, mask='auto')
+
+    c.save()
+
     return send_file(filepath_pdf, as_attachment=True)
+
 
 # -------------------------
 # Run Server
 # -------------------------
 from waitress import serve
+
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=8080)
