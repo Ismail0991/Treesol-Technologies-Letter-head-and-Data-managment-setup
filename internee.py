@@ -134,40 +134,30 @@ def generate_letter(id):
     if not internee:
         flash("❌ Internee not found!", "danger")
         return redirect(url_for("index"))
-
     start = internee["start"]
     end = internee["end"]
-
     # Create DOCX document
     doc = Document()
-
     # Logo
     if os.path.exists("static/s1.png"):
         p = doc.add_paragraph()
         p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
         r = p.add_run()
         r.add_picture("static/s1.png", width=Inches(5.0))
-
     doc.add_paragraph("")  # spacing
-
     # Body text
     body = doc.add_paragraph()
     body.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
-
     run = body.add_run("We are pleased to confirm that ")
     run.font.size = Pt(12)
-
     run_name = body.add_run(f"{internee['name']} ")
     run_name.bold = True
     run_name.font.size = Pt(12)
-
     run2 = body.add_run(f"Son/Daughter of {internee['father']} worked as a ")
     run2.font.size = Pt(12)
-
     run_field = body.add_run(f"{internee['field']} Intern ")
     run_field.bold = True
     run_field.font.size = Pt(12)
-
     run3 = body.add_run(
         f"in our firm TreeSol Technologies PVT Ltd. "
         f"He/She has completed his/her internship from {start} to {end}. "
@@ -176,17 +166,14 @@ def generate_letter(id):
         f"Warm Regards"
     )
     run3.font.size = Pt(12)
-
     doc.add_paragraph("Issued on: " + datetime.today().strftime("%d-%m-%Y"))
-
     # Stamp
     if os.path.exists("static/stamp.png"):
         p = doc.add_paragraph()
         p.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
         r = p.add_run()
         r.add_picture("static/stamp.png", width=Inches(1.2))
-
-    # Footer
+    # Footer (in DOCX)
     if os.path.exists("static/s2.png"):
         section = doc.sections[0]
         footer = section.footer
@@ -194,26 +181,25 @@ def generate_letter(id):
         p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
         r = p.add_run()
         r.add_picture("static/s2.png", width=Inches(6.5))
-
     # Save DOCX
     letters_dir = "letters"
     os.makedirs(letters_dir, exist_ok=True)
     filename_docx = f"internship_letter_{internee['name'].replace(' ', '_')}.docx"
     filepath_docx = os.path.join(letters_dir, filename_docx)
     doc.save(filepath_docx)
-
     # Convert DOCX → HTML → PDF using mammoth + pdfkit
     with open(filepath_docx, "rb") as f:
         result = mammoth.convert_to_html(f)
     html = result.value
-
+    # Add footer image to HTML
+    footer_img = '<div style="position: fixed; bottom: 0; width: 100%; text-align: center;"><img src="file:///' + os.path.abspath("static/s2.png") + '" style="width: 6.5in;"></div>'
+    html += footer_img
     filename_pdf = filepath_docx.replace(".docx", ".pdf")
     filepath_pdf = filename_pdf
-
     # You need wkhtmltopdf installed for pdfkit
     pdfkit.from_string(html, filepath_pdf)
-
     return send_file(filepath_pdf, as_attachment=True)
+
 
 # -------------------------
 # Run Server
