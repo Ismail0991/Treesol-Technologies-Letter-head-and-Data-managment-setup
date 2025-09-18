@@ -216,4 +216,6 @@ def generate_letter(id):
 
 from waitress import serve
 if __name__ == "__main__":
- serve(app, host="127.0.0.1", port=8080)
+    port = int(os.environ.get("PORT", 8080))  # Render provides PORT
+    serve(app, host="0.0.0.0", port=port)
+
