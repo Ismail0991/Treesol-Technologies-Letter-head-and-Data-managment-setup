@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session 
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session
 from google.cloud import firestore
 from datetime import datetime
 from docx import Document
 from docx.shared import Pt, Inches
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from docx2pdf import convert
 import os
+import mammoth
+import pdfkit
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -59,10 +60,10 @@ def index():
 
     is_direct_open = request.referrer is None or request.referrer.endswith(request.host_url)
 
-    if is_direct_open:
-        for doc in docs:
-            d = doc.to_dict()
-            d["id"] = doc.id
+    for doc in docs:
+        d = doc.to_dict()
+        d["id"] = doc.id
+        if is_direct_open:
             try:
                 end_date = datetime.strptime(d["end"], "%Y-%m-%d").date()
                 days_left = (end_date - today).days
@@ -70,17 +71,13 @@ def index():
                     flash(f"⚠️ {d['name']}'s internship ends in {days_left} days!", "warning")
             except Exception as e:
                 print("Date parse error:", e)
-            internees.append(d)
-    else:
-        for doc in docs:
-            d = doc.to_dict()
-            d["id"] = doc.id
-            internees.append(d)
+        internees.append(d)
 
     return render_template("index.html", internees=internees)
 
-
+# -------------------------
 # Add internee
+# -------------------------
 @app.route("/add", methods=["POST"])
 def add_internee():
     data = {
@@ -96,8 +93,9 @@ def add_internee():
     flash("✅ Internee Added Successfully!", "success")
     return redirect(url_for("index"))
 
-
+# -------------------------
 # Edit internee
+# -------------------------
 @app.route("/edit/<id>", methods=["GET", "POST"])
 def edit_internee(id):
     doc_ref = db.collection("internees").document(id)
@@ -118,16 +116,18 @@ def edit_internee(id):
 
     return render_template("edit.html", internee=data, id=id)
 
-
+# -------------------------
 # Delete internee
+# -------------------------
 @app.route("/delete/<id>")
 def delete_internee(id):
     db.collection("internees").document(id).delete()
     flash("❌ Internee Deleted Successfully!", "danger")
     return redirect(url_for("index"))
 
-
+# -------------------------
 # Generate internship completion letter (PDF)
+# -------------------------
 @app.route("/letter/<id>", methods=["POST"])
 def generate_letter(id):
     internee = db.collection("internees").document(id).get().to_dict()
@@ -138,10 +138,10 @@ def generate_letter(id):
     start = internee["start"]
     end = internee["end"]
 
-    # Create Word document
+    # Create DOCX document
     doc = Document()
 
-    # Letterhead: logo only (centered at top)
+    # Logo
     if os.path.exists("static/s1.png"):
         p = doc.add_paragraph()
         p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
@@ -150,14 +150,11 @@ def generate_letter(id):
 
     doc.add_paragraph("")  # spacing
 
-    # Body text (justified alignment, professional style)
+    # Body text
     body = doc.add_paragraph()
     body.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
-    # Bold intern's name and field
-    run = body.add_run(
-        f"We are pleased to confirm that "
-    )
+    run = body.add_run("We are pleased to confirm that ")
     run.font.size = Pt(12)
 
     run_name = body.add_run(f"{internee['name']} ")
@@ -180,19 +177,16 @@ def generate_letter(id):
     )
     run3.font.size = Pt(12)
 
-    
-    # 
-# Issued date (one line above Warm Regards)
     doc.add_paragraph("Issued on: " + datetime.today().strftime("%d-%m-%Y"))
 
-    # Stamp image aligned right
+    # Stamp
     if os.path.exists("static/stamp.png"):
         p = doc.add_paragraph()
         p.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
         r = p.add_run()
         r.add_picture("static/stamp.png", width=Inches(1.2))
 
-    # ✅ Add s2.png at the bottom (footer, centered)
+    # Footer
     if os.path.exists("static/s2.png"):
         section = doc.sections[0]
         footer = section.footer
@@ -201,19 +195,29 @@ def generate_letter(id):
         r = p.add_run()
         r.add_picture("static/s2.png", width=Inches(6.5))
 
-    # Save DOCX first
+    # Save DOCX
+    letters_dir = "letters"
+    os.makedirs(letters_dir, exist_ok=True)
     filename_docx = f"internship_letter_{internee['name'].replace(' ', '_')}.docx"
-    filepath_docx = os.path.join("letters", filename_docx)
-    os.makedirs("letters", exist_ok=True)
+    filepath_docx = os.path.join(letters_dir, filename_docx)
     doc.save(filepath_docx)
 
-    # Convert to PDF
-    filepath_pdf = filepath_docx.replace(".docx", ".pdf")
-    convert(filepath_docx, filepath_pdf)
+    # Convert DOCX → HTML → PDF using mammoth + pdfkit
+    with open(filepath_docx, "rb") as f:
+        result = mammoth.convert_to_html(f)
+    html = result.value
+
+    filename_pdf = filepath_docx.replace(".docx", ".pdf")
+    filepath_pdf = filename_pdf
+
+    # You need wkhtmltopdf installed for pdfkit
+    pdfkit.from_string(html, filepath_pdf)
 
     return send_file(filepath_pdf, as_attachment=True)
 
-
+# -------------------------
+# Run Server
+# -------------------------
 from waitress import serve
 if __name__ == "__main__":
- serve(app, host="0.0.0.0", port=8080)
+    serve(app, host="0.0.0.0", port=8080)
