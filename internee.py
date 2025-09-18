@@ -14,12 +14,8 @@ import json
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
-# -------------------------
-# Firestore client (local vs Render)
-# -------------------------
-SERVICE_ACCOUNT_FILE = "serviceAccountKey.json"
-credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
-db = firestore.Client(credentials=credentials, project=credentials.project_id)
+# Firestore client
+db = firestore.Client.from_service_account_json("serviceAccountKey.json")
 
 # -------------------------
 # Login System
@@ -87,9 +83,8 @@ def index():
 
     return render_template("index.html", internees=internees)
 
-# -------------------------
+
 # Add internee
-# -------------------------
 @app.route("/add", methods=["POST"])
 def add_internee():
     data = {
@@ -105,9 +100,8 @@ def add_internee():
     flash("✅ Internee Added Successfully!", "success")
     return redirect(url_for("index"))
 
-# -------------------------
+
 # Edit internee
-# -------------------------
 @app.route("/edit/<id>", methods=["GET", "POST"])
 def edit_internee(id):
     doc_ref = db.collection("internees").document(id)
@@ -128,18 +122,16 @@ def edit_internee(id):
 
     return render_template("edit.html", internee=data, id=id)
 
-# -------------------------
+
 # Delete internee
-# -------------------------
 @app.route("/delete/<id>")
 def delete_internee(id):
     db.collection("internees").document(id).delete()
     flash("❌ Internee Deleted Successfully!", "danger")
     return redirect(url_for("index"))
 
-# -------------------------
+
 # Generate internship completion letter (PDF)
-# -------------------------
 @app.route("/letter/<id>", methods=["POST"])
 def generate_letter(id):
     internee = db.collection("internees").document(id).get().to_dict()
@@ -162,11 +154,14 @@ def generate_letter(id):
 
     doc.add_paragraph("")  # spacing
 
-    # Body text
+    # Body text (justified alignment, professional style)
     body = doc.add_paragraph()
     body.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
-    run = body.add_run("We are pleased to confirm that ")
+    # Bold intern's name and field
+    run = body.add_run(
+        f"We are pleased to confirm that "
+    )
     run.font.size = Pt(12)
 
     run_name = body.add_run(f"{internee['name']} ")
@@ -189,7 +184,9 @@ def generate_letter(id):
     )
     run3.font.size = Pt(12)
 
-    # Issued date
+    
+    # 
+# Issued date (one line above Warm Regards)
     doc.add_paragraph("Issued on: " + datetime.today().strftime("%d-%m-%Y"))
 
     # Stamp image aligned right
@@ -199,7 +196,7 @@ def generate_letter(id):
         r = p.add_run()
         r.add_picture("static/stamp.png", width=Inches(1.2))
 
-    # Footer (s2.png)
+    # ✅ Add s2.png at the bottom (footer, centered)
     if os.path.exists("static/s2.png"):
         section = doc.sections[0]
         footer = section.footer
@@ -227,5 +224,6 @@ from waitress import serve
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Render provides PORT
     serve(app, host="0.0.0.0", port=port)
+
 
 
