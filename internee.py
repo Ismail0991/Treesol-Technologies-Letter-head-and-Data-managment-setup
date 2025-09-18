@@ -1,15 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session 
 from google.cloud import firestore
-import base64
-import json
-from google.oauth2 import service_account
 from datetime import datetime
 from docx import Document
 from docx.shared import Pt, Inches
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx2pdf import convert
 import os
-import json
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -206,25 +202,16 @@ def generate_letter(id):
         r.add_picture("static/s2.png", width=Inches(6.5))
 
     # Save DOCX first
-    filename_docx = f"internship_letter_{internee['name'].replace(' ', '_')}.docx"
-    filepath_docx = os.path.join("letters", filename_docx)
-    os.makedirs("letters", exist_ok=True)
-    doc.save(filepath_docx)
+        filename_docx = f"internship_letter_{internee['name'].replace(' ', '_')}.docx"
+        filepath_docx = os.path.join("letters", filename_docx)
+        os.makedirs("letters", exist_ok=True)
+        doc.save(filepath_docx)
 
-    # Convert to PDF
-    filepath_pdf = filepath_docx.replace(".docx", ".pdf")
-    convert(filepath_docx, filepath_pdf)
+    # Return DOCX directly
+    return send_file(filepath_docx, as_attachment=True)
 
-    return send_file(filepath_pdf, as_attachment=True)
 
-# -------------------------
-# Run server
-# -------------------------
+
 from waitress import serve
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))  # Render provides PORT
-    serve(app, host="0.0.0.0", port=port)
-
-
-
-
+ serve(app, host="127.0.0.1", port=8080)
