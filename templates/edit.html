@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Internee</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <h2 class="mb-4 text-primary">Edit Internee</h2>
+
+    <form method="POST">
+        <div class="mb-3">
+            <label>Name</label>
+            <input type="text" name="name" maxlength="25" pattern="[A-Za-z ]+" value="{{ internee.name }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Father Name</label>
+            <input type="text" name="father" maxlength="25" pattern="[A-Za-z ]+" value="{{ internee.father }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>CNIC</label>
+            <input type="text" name="cnic" maxlength="15" value="{{ internee.cnic }}" class="form-control" required oninput="formatCNIC(this)">
+        </div>
+        <div class="mb-3">
+            <label>Phone</label>
+            <input type="text" name="phone" pattern="[0-9]+" value="{{ internee.phone }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Field</label>
+            <input type="text" name="field" maxlength="25" value="{{ internee.field }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Start Date</label>
+            <input type="date" name="start" value="{{ internee.start }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>End Date</label>
+            <input type="date" name="end" value="{{ internee.end }}" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-success">Save Changes</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<script>
+    // CNIC auto-formatting: XXXXX-XXXXXXX-X
+    function formatCNIC(input) {
+        let value = input.value.replace(/[^0-9]/g, ""); // only digits
+        if (value.length > 5 && value.length <= 12) {
+            input.value = value.slice(0,5) + "-" + value.slice(5);
+        } else if (value.length > 12) {
+            input.value = value.slice(0,5) + "-" + value.slice(5,12) + "-" + value.slice(12,13);
+        } else {
+            input.value = value;
+        }
+    }
+</script>
+</body>
+</html>
