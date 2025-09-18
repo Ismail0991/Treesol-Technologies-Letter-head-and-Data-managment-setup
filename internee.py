@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session
 from google.cloud import firestore
+import base64
+import json
 from google.oauth2 import service_account
 from datetime import datetime
 from docx import Document
@@ -15,13 +17,13 @@ app.secret_key = "your_secret_key"
 # -------------------------
 # Firestore client (local vs Render)
 # -------------------------
-if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in os.environ:
-    # Render deployment → use env var
-    service_account_info = json.loads(os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+if "GOOGLE_APPLICATION_CREDENTIALS_JSON_B64" in os.environ:
+    service_account_info = json.loads(
+        base64.b64decode(os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON_B64"]).decode("utf-8")
+    )
     credentials = service_account.Credentials.from_service_account_info(service_account_info)
     db = firestore.Client(credentials=credentials, project=service_account_info["project_id"])
 else:
-    # Local dev → use JSON file
     db = firestore.Client.from_service_account_json("serviceAccountKey.json")
 
 # -------------------------
@@ -230,3 +232,4 @@ from waitress import serve
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Render provides PORT
     serve(app, host="0.0.0.0", port=port)
+
