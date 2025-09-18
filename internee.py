@@ -4,8 +4,8 @@ from datetime import datetime
 from docx import Document
 from docx.shared import Pt, Inches
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx2pdf import convert
 import os
-import subprocess
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -59,10 +59,10 @@ def index():
 
     is_direct_open = request.referrer is None or request.referrer.endswith(request.host_url)
 
-    for doc in docs:
-        d = doc.to_dict()
-        d["id"] = doc.id
-        if is_direct_open:
+    if is_direct_open:
+        for doc in docs:
+            d = doc.to_dict()
+            d["id"] = doc.id
             try:
                 end_date = datetime.strptime(d["end"], "%Y-%m-%d").date()
                 days_left = (end_date - today).days
@@ -70,7 +70,12 @@ def index():
                     flash(f"⚠️ {d['name']}'s internship ends in {days_left} days!", "warning")
             except Exception as e:
                 print("Date parse error:", e)
-        internees.append(d)
+            internees.append(d)
+    else:
+        for doc in docs:
+            d = doc.to_dict()
+            d["id"] = doc.id
+            internees.append(d)
 
     return render_template("index.html", internees=internees)
 
@@ -122,7 +127,7 @@ def delete_internee(id):
     return redirect(url_for("index"))
 
 
-# Generate internship completion letter (PDF) using LibreOffice headless
+# Generate internship completion letter (PDF)
 @app.route("/letter/<id>", methods=["POST"])
 def generate_letter(id):
     internee = db.collection("internees").document(id).get().to_dict()
@@ -149,7 +154,10 @@ def generate_letter(id):
     body = doc.add_paragraph()
     body.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
-    run = body.add_run("We are pleased to confirm that ")
+    # Bold intern's name and field
+    run = body.add_run(
+        f"We are pleased to confirm that "
+    )
     run.font.size = Pt(12)
 
     run_name = body.add_run(f"{internee['name']} ")
@@ -172,7 +180,9 @@ def generate_letter(id):
     )
     run3.font.size = Pt(12)
 
-    # Issued date
+    
+    # 
+# Issued date (one line above Warm Regards)
     doc.add_paragraph("Issued on: " + datetime.today().strftime("%d-%m-%Y"))
 
     # Stamp image aligned right
@@ -182,7 +192,7 @@ def generate_letter(id):
         r = p.add_run()
         r.add_picture("static/stamp.png", width=Inches(1.2))
 
-    # Footer image s2.png
+    # ✅ Add s2.png at the bottom (footer, centered)
     if os.path.exists("static/s2.png"):
         section = doc.sections[0]
         footer = section.footer
@@ -191,32 +201,19 @@ def generate_letter(id):
         r = p.add_run()
         r.add_picture("static/s2.png", width=Inches(6.5))
 
-    # Save DOCX
+    # Save DOCX first
     filename_docx = f"internship_letter_{internee['name'].replace(' ', '_')}.docx"
     filepath_docx = os.path.join("letters", filename_docx)
     os.makedirs("letters", exist_ok=True)
     doc.save(filepath_docx)
 
-    # Convert DOCX → PDF using LibreOffice headless
-    filename_pdf = filename_docx.replace(".docx", ".pdf")
-    filepath_pdf = os.path.join("letters", filename_pdf)
-    try:
-        subprocess.run([
-            "libreoffice",
-            "--headless",
-            "--convert-to",
-            "pdf",
-            filepath_docx,
-            "--outdir",
-            "letters"
-        ], check=True)
-    except subprocess.CalledProcessError:
-        flash("❌ Failed to convert DOCX to PDF. Ensure LibreOffice is installed.", "danger")
-        return redirect(url_for("index"))
+    # Convert to PDF
+    filepath_pdf = filepath_docx.replace(".docx", ".pdf")
+    convert(filepath_docx, filepath_pdf)
 
     return send_file(filepath_pdf, as_attachment=True)
 
 
 from waitress import serve
 if __name__ == "__main__":
-    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+ serve(app, host="0.0.0.0", port=8080)
