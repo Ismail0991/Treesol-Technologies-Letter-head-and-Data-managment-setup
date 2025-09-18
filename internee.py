@@ -1,17 +1,28 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session 
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session
 from google.cloud import firestore
+from google.oauth2 import service_account
 from datetime import datetime
 from docx import Document
 from docx.shared import Pt, Inches
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx2pdf import convert
 import os
+import json
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
-# Firestore client
-db = firestore.Client.from_service_account_json("serviceAccountKey.json")
+# -------------------------
+# Firestore client (local vs Render)
+# -------------------------
+if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in os.environ:
+    # Render deployment → use env var
+    service_account_info = json.loads(os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+    credentials = service_account.Credentials.from_service_account_info(service_account_info)
+    db = firestore.Client(credentials=credentials, project=service_account_info["project_id"])
+else:
+    # Local dev → use JSON file
+    db = firestore.Client.from_service_account_json("serviceAccountKey.json")
 
 # -------------------------
 # Login System
@@ -79,8 +90,9 @@ def index():
 
     return render_template("index.html", internees=internees)
 
-
+# -------------------------
 # Add internee
+# -------------------------
 @app.route("/add", methods=["POST"])
 def add_internee():
     data = {
@@ -96,8 +108,9 @@ def add_internee():
     flash("✅ Internee Added Successfully!", "success")
     return redirect(url_for("index"))
 
-
+# -------------------------
 # Edit internee
+# -------------------------
 @app.route("/edit/<id>", methods=["GET", "POST"])
 def edit_internee(id):
     doc_ref = db.collection("internees").document(id)
@@ -118,16 +131,18 @@ def edit_internee(id):
 
     return render_template("edit.html", internee=data, id=id)
 
-
+# -------------------------
 # Delete internee
+# -------------------------
 @app.route("/delete/<id>")
 def delete_internee(id):
     db.collection("internees").document(id).delete()
     flash("❌ Internee Deleted Successfully!", "danger")
     return redirect(url_for("index"))
 
-
+# -------------------------
 # Generate internship completion letter (PDF)
+# -------------------------
 @app.route("/letter/<id>", methods=["POST"])
 def generate_letter(id):
     internee = db.collection("internees").document(id).get().to_dict()
@@ -150,14 +165,11 @@ def generate_letter(id):
 
     doc.add_paragraph("")  # spacing
 
-    # Body text (justified alignment, professional style)
+    # Body text
     body = doc.add_paragraph()
     body.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
-    # Bold intern's name and field
-    run = body.add_run(
-        f"We are pleased to confirm that "
-    )
+    run = body.add_run("We are pleased to confirm that ")
     run.font.size = Pt(12)
 
     run_name = body.add_run(f"{internee['name']} ")
@@ -180,9 +192,7 @@ def generate_letter(id):
     )
     run3.font.size = Pt(12)
 
-    
-    # 
-# Issued date (one line above Warm Regards)
+    # Issued date
     doc.add_paragraph("Issued on: " + datetime.today().strftime("%d-%m-%Y"))
 
     # Stamp image aligned right
@@ -192,7 +202,7 @@ def generate_letter(id):
         r = p.add_run()
         r.add_picture("static/stamp.png", width=Inches(1.2))
 
-    # ✅ Add s2.png at the bottom (footer, centered)
+    # Footer (s2.png)
     if os.path.exists("static/s2.png"):
         section = doc.sections[0]
         footer = section.footer
@@ -213,9 +223,10 @@ def generate_letter(id):
 
     return send_file(filepath_pdf, as_attachment=True)
 
-
+# -------------------------
+# Run server
+# -------------------------
 from waitress import serve
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Render provides PORT
     serve(app, host="0.0.0.0", port=port)
-
