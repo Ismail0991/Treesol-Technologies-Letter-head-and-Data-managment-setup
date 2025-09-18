@@ -15,7 +15,7 @@ app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
 # Firestore client
-db = firestore.Client.from_service_account_json("serviceAccountKey.json")
+db = firestore.Client.from_service_account_json("traineedata-a1379-8c9c23dd84c8.json")
 
 # -------------------------
 # Login System
@@ -224,6 +224,7 @@ from waitress import serve
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Render provides PORT
     serve(app, host="0.0.0.0", port=port)
+
 
 
 
