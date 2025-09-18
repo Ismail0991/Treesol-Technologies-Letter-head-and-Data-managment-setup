@@ -7,10 +7,10 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 import os
 import mammoth
 import pdfkit
+import base64
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
-
 # Firestore client
 db = firestore.Client.from_service_account_json("traineedata-a1379-8c9c23dd84c8.json")
 
@@ -25,14 +25,12 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-
         if username == USERNAME and password == PASSWORD:
             session["user"] = username
             flash("✅ Logged in successfully!", "success")
             return redirect(url_for("index"))
         else:
             flash("❌ Invalid username or password", "danger")
-
     return render_template("login.html")
 
 @app.route("/logout")
@@ -57,9 +55,7 @@ def index():
     docs = db.collection("internees").stream()
     internees = []
     today = datetime.today().date()
-
     is_direct_open = request.referrer is None or request.referrer.endswith(request.host_url)
-
     for doc in docs:
         d = doc.to_dict()
         d["id"] = doc.id
@@ -72,7 +68,6 @@ def index():
             except Exception as e:
                 print("Date parse error:", e)
         internees.append(d)
-
     return render_template("index.html", internees=internees)
 
 # -------------------------
@@ -100,7 +95,6 @@ def add_internee():
 def edit_internee(id):
     doc_ref = db.collection("internees").document(id)
     data = doc_ref.get().to_dict()
-
     if request.method == "POST":
         doc_ref.update({
             "name": request.form["name"],
@@ -113,7 +107,6 @@ def edit_internee(id):
         })
         flash("✅ Internee Updated Successfully!", "success")
         return redirect(url_for("index"))
-
     return render_template("edit.html", internee=data, id=id)
 
 # -------------------------
@@ -173,7 +166,7 @@ def generate_letter(id):
         p.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
         r = p.add_run()
         r.add_picture("static/stamp.png", width=Inches(1.2))
-    # Footer (in DOCX)
+    # Footer
     if os.path.exists("static/s2.png"):
         section = doc.sections[0]
         footer = section.footer
@@ -192,14 +185,16 @@ def generate_letter(id):
         result = mammoth.convert_to_html(f)
     html = result.value
     # Add footer image to HTML
-    footer_img = '<div style="position: fixed; bottom: 0; width: 100%; text-align: center;"><img src="file:///' + os.path.abspath("static/s2.png") + '" style="width: 6.5in;"></div>'
-    html += footer_img
+    if os.path.exists("static/s2.png"):
+        with open("static/s2.png", "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+        footer_img = f'<div style="position: fixed; bottom: 0; width: 100%; text-align: center;"><img src="data:image/png;base64,{encoded_string}" style="width: 6.5in;"></div>'
+        html += footer_img
     filename_pdf = filepath_docx.replace(".docx", ".pdf")
     filepath_pdf = filename_pdf
     # You need wkhtmltopdf installed for pdfkit
     pdfkit.from_string(html, filepath_pdf)
     return send_file(filepath_pdf, as_attachment=True)
-
 
 # -------------------------
 # Run Server
