@@ -2,4 +2,5 @@ flask
 waitress
 google-cloud-firestore
 python-docx
-docx2pdf
+mammoth
+pdfkit 
