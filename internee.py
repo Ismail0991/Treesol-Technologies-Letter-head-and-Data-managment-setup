@@ -40,7 +40,7 @@ def logout():
 # -------------------------
 @app.before_request
 def require_login():
-    allowed_routes = ["login", "static"]
+    allowed_routes = ["login", "static", "letter_by_name"]
     if "user" not in session and request.endpoint not in allowed_routes:
         return redirect(url_for("login"))
 
@@ -136,35 +136,25 @@ def generate_letter(id):
     margin = 50
     y = height - margin
 
-    # -------------------------
-    # Header Image (s4.png)
-    # -------------------------
+    # Header Image
     header_path = "static/s4.png"
     if os.path.exists(header_path):
         c.drawImage(header_path, margin - 55, y - 100, width=width + 20, preserveAspectRatio=True, mask='auto')
-        y -= 120  # space below header
+        y -= 120
 
-    # -------------------------
-    # Stamp Image (stamp.png)
-    # -------------------------
+    # Stamp Image
     stamp_path = "static/stamp.png"
     if os.path.exists(stamp_path):
-    # Example: place stamp near bottom-right above footer
-        stamp_width = 100  # adjust size as needed
-        stamp_height = 100  # adjust height proportionally if needed
+        stamp_width = 100
+        stamp_height = 100
         c.drawImage(stamp_path, width - stamp_width - 20, 130, width=stamp_width, height=stamp_height, preserveAspectRatio=True, mask='auto')
 
-
-    # -------------------------
     # Title
-    # -------------------------
     c.setFont("Helvetica-Bold", 16)
     c.drawCentredString(width/2, y, "Internship Completion Letter")
     y -= 50
 
-    # -------------------------
     # Body Text
-    # -------------------------
     c.setFont("Helvetica", 12)
     text_lines = [
         f"This is to certify that {internee['name']},",
@@ -185,17 +175,94 @@ def generate_letter(id):
         c.drawString(margin, y, line)
         y -= 20
 
-    # -------------------------
-    # Footer Image (s3.png)
-    # -------------------------
+    # Footer Image
     footer_path = "static/s3.png"
     if os.path.exists(footer_path):
         c.drawImage(footer_path, -20, -80, width=width + 20, preserveAspectRatio=True, mask='auto')
 
     c.save()
-
     return send_file(filepath_pdf, as_attachment=True)
 
+# -------------------------
+# Generate letter by Name (no login required)
+# -------------------------
+@app.route("/letter_by_name", methods=["GET", "POST"])
+def letter_by_name():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        if not name:
+            flash("❌ Please provide a name!", "danger")
+            return redirect(url_for("letter_by_name"))
+
+        # Search Firestore by name
+        docs = db.collection("internees").where("name", "==", name).stream()
+        internee = None
+        for doc in docs:
+            internee = doc.to_dict()
+            break
+
+        if not internee:
+            flash(f"❌ No internee found with name '{name}'", "danger")
+            return redirect(url_for("letter_by_name"))
+
+        # Generate PDF (reuse same code)
+        letters_dir = "letters"
+        os.makedirs(letters_dir, exist_ok=True)
+        filepath_pdf = os.path.join(letters_dir, f"{internee['name'].replace(' ', '_')}_letter.pdf")
+
+        c = canvas.Canvas(filepath_pdf, pagesize=A4)
+        width, height = A4
+        margin = 50
+        y = height - margin
+
+        # Header Image
+        header_path = "static/s4.png"
+        if os.path.exists(header_path):
+            c.drawImage(header_path, margin - 55, y - 100, width=width + 20, preserveAspectRatio=True, mask='auto')
+            y -= 120
+
+        # Stamp Image
+        stamp_path = "static/stamp.png"
+        if os.path.exists(stamp_path):
+            stamp_width = 100
+            stamp_height = 100
+            c.drawImage(stamp_path, width - stamp_width - 20, 130, width=stamp_width, height=stamp_height, preserveAspectRatio=True, mask='auto')
+
+        # Title
+        c.setFont("Helvetica-Bold", 16)
+        c.drawCentredString(width/2, y, "Internship Completion Letter")
+        y -= 50
+
+        # Body Text
+        c.setFont("Helvetica", 12)
+        text_lines = [
+            f"This is to certify that {internee['name']},",
+            f"Son/Daughter of {internee['father']},",
+            f"worked as a {internee['field']} Intern at TreeSol Technologies PVT Ltd.",
+            f"from {internee['start']} to {internee['end']}.",
+            "During the internship, he/she demonstrated good skills with a self-motivated attitude",
+            "to learn new things.",
+            "We wish him/her all the best for his/her future endeavors.",
+            "",
+            f"Issued on: {datetime.today().strftime('%d-%m-%Y')}",
+            "",
+            "Warm Regards,",
+            "TreeSol Technologies PVT Ltd."
+        ]
+
+        for line in text_lines:
+            c.drawString(margin, y, line)
+            y -= 20
+
+        # Footer Image
+        footer_path = "static/s3.png"
+        if os.path.exists(footer_path):
+            c.drawImage(footer_path, -20, -80, width=width + 20, preserveAspectRatio=True, mask='auto')
+
+        c.save()
+        return send_file(filepath_pdf, as_attachment=True)
+
+    return render_template("letter_by_name.html")  # new template with a form to enter name
 
 # -------------------------
 # Run Server
