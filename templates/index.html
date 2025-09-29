@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Internee Management System</title>
+  <title>Staff Management System</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -13,8 +13,8 @@
     
     <!-- Branding Section (hidden on mobile) -->
     <div class="hidden md:flex md:w-1/4 bg-gradient-to-b from-red-700 to-red-600 text-white flex-col justify-center items-center p-10 md:p-16 shadow-lg">
-      <h1 class="text-3xl md:text-4xl font-extrabold tracking-wide">🔥 Internee<br>Management</h1>
-      <p class="mt-4 text-red-100 text-center md:text-left text-lg">Effortlessly manage internees, track records, and streamline operations with style.</p>
+      <h1 class="text-3xl md:text-4xl font-extrabold tracking-wide">🔥 Staff<br>Management</h1>
+      <p class="mt-4 text-red-100 text-center md:text-left text-lg">Effortlessly manage Staff, track records, and streamline operations with style.</p>
       <img src="https://cdn-icons-png.flaticon.com/512/3209/3209265.png" alt="branding" class="mt-8 w-40 md:w-52">
     </div>
 
@@ -24,7 +24,7 @@
 
         <!-- Header (desktop) -->
         <div class="flex justify-between items-center bg-gradient-to-r from-red-600 to-red-500 text-white px-6 py-4 rounded-lg shadow-lg">
-          <h2 class="text-2xl font-bold tracking-wide">📋 Internee Records</h2>
+          <h2 class="text-2xl font-bold tracking-wide">📋 Staff Records</h2>
           <div class="hidden md:flex items-center gap-3">
             <!-- Search bar (desktop only) -->
             <input id="searchInput" type="text" placeholder="🔍 Search by name..."
@@ -74,7 +74,7 @@
 
         <!-- Add Internee Form -->
         <div class="bg-white shadow-lg rounded-lg p-6 mt-8 border border-gray-100">
-          <h5 class="text-lg font-semibold mb-4 text-gray-800">➕ Add New Internee</h5>
+          <h5 class="text-lg font-semibold mb-4 text-gray-800">➕ Add New Staff</h5>
           <form method="POST" action="{{ url_for('add_internee') }}" class="grid md:grid-cols-4 gap-4">
             <input type="text" name="name" maxlength="25" pattern="[A-Za-z ]+" placeholder="👤 Name" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
             <input type="text" name="father" maxlength="25" pattern="[A-Za-z ]+" placeholder="👨 Father Name" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
