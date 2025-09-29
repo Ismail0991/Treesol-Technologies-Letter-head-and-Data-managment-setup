@@ -1,15 +1,34 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session, abort
+from flask import Flask, render_template, request, redirect, send_from_directory, url_for, flash, send_file, session, abort
 from google.cloud import firestore
 from datetime import datetime, timedelta
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import os, secrets
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
 # Firestore client
 db = firestore.Client.from_service_account_json("traineedata-a1379-8c9c23dd84c8.json")
+
+# -------------------------
+# File Upload Config
+# -------------------------
+UPLOAD_FOLDER = "uploads"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# -------------------------
+# Serve Uploaded Files
+# -------------------------
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 # -------------------------
 # Invite Token Storage
@@ -21,6 +40,7 @@ invite_tokens = {}  # {token: expiry_datetime}
 # -------------------------
 USERNAME = "rizwan89"
 PASSWORD = "1234567891"
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -102,6 +122,23 @@ def invite_form(token):
             "start": request.form["start"],
             "end": request.form["end"],
         }
+
+        # ✅ Handle image upload
+        image_file = request.files.get("image")
+        cnic_file = request.files.get("cnic_image")
+
+        if image_file and allowed_file(image_file.filename):
+            filename = secure_filename(image_file.filename)
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            image_file.save(save_path)
+            data["image"] = filename  # only store filename in Firestore
+
+        if cnic_file and allowed_file(cnic_file.filename):
+           cnic_filename = secure_filename(cnic_file.filename)
+           cnic_file.save(os.path.join(app.config["UPLOAD_FOLDER"], cnic_filename))
+           image_file.save(save_path)
+           data["cnic_image"] = cnic_filename
+
         db.collection("internees").add(data)
 
         # Invalidate token after use
@@ -126,9 +163,28 @@ def add_internee():
         "start": request.form["start"],
         "end": request.form["end"],
     }
+
+    # Handle image upload
+    image_file = request.files.get("image")
+    cnic_file = request.files.get("cnic_image")
+
+    if image_file and allowed_file(image_file.filename):
+        filename = secure_filename(image_file.filename)
+        save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        image_file.save(save_path)
+        data["image"] = filename  # ✅ only save filename in Firestore
+
+    if cnic_file and allowed_file(cnic_file.filename):
+       cnic_filename = secure_filename(cnic_file.filename)
+       cnic_file.save(os.path.join(app.config["UPLOAD_FOLDER"], cnic_filename))
+       image_file.save(save_path)
+       data["cnic_image"] = cnic_filename
+
     db.collection("internees").add(data)
     flash("✅ Internee Added Successfully!", "success")
     return redirect(url_for("index"))
+
+
 
 # -------------------------
 # Edit internee
@@ -138,7 +194,7 @@ def edit_internee(id):
     doc_ref = db.collection("internees").document(id)
     data = doc_ref.get().to_dict()
     if request.method == "POST":
-        doc_ref.update({
+        update_data = {
             "name": request.form["name"],
             "father": request.form["father"],
             "cnic": request.form["cnic"],
@@ -146,10 +202,22 @@ def edit_internee(id):
             "field": request.form["field"],
             "start": request.form["start"],
             "end": request.form["end"]
-        })
+        }
+
+        # ✅ Handle new image if uploaded
+        image_file = request.files.get("image")
+        if image_file and allowed_file(image_file.filename):
+            filename = secure_filename(image_file.filename)
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            image_file.save(save_path)
+            update_data["image"] = filename  # overwrite old image in Firestore
+
+        doc_ref.update(update_data)
         flash("✅ Internee Updated Successfully!", "success")
         return redirect(url_for("index"))
+
     return render_template("edit.html", internee=data, id=id)
+
 
 # -------------------------
 # Delete internee
