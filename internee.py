@@ -130,13 +130,15 @@ def invite_form(token):
         if image_file and allowed_file(image_file.filename):
             filename = secure_filename(image_file.filename)
             save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            image_file.save(save_path)
+            if not os.path.exists(save_path):  # <-- check before saving
+             image_file.save(save_path)
             data["image"] = filename  # only store filename in Firestore
 
         if cnic_file and allowed_file(cnic_file.filename):
            cnic_filename = secure_filename(cnic_file.filename)
            cnic_file.save(os.path.join(app.config["UPLOAD_FOLDER"], cnic_filename))
-           image_file.save(save_path)
+           if not os.path.exists(save_path):  # <-- check before saving
+            image_file.save(save_path)
            data["cnic_image"] = cnic_filename
 
         db.collection("internees").add(data)
@@ -171,13 +173,15 @@ def add_internee():
     if image_file and allowed_file(image_file.filename):
         filename = secure_filename(image_file.filename)
         save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        image_file.save(save_path)
+        if not os.path.exists(save_path):  # <-- check before saving
+         image_file.save(save_path)
         data["image"] = filename  # ✅ only save filename in Firestore
 
     if cnic_file and allowed_file(cnic_file.filename):
        cnic_filename = secure_filename(cnic_file.filename)
        cnic_file.save(os.path.join(app.config["UPLOAD_FOLDER"], cnic_filename))
-       image_file.save(save_path)
+       if not os.path.exists(save_path):  # <-- check before saving
+        image_file.save(save_path)
        data["cnic_image"] = cnic_filename
 
     db.collection("internees").add(data)
@@ -209,7 +213,8 @@ def edit_internee(id):
         if image_file and allowed_file(image_file.filename):
             filename = secure_filename(image_file.filename)
             save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            image_file.save(save_path)
+            if not os.path.exists(save_path):  # <-- check before saving
+             image_file.save(save_path)
             update_data["image"] = filename  # overwrite old image in Firestore
 
         doc_ref.update(update_data)
@@ -312,6 +317,17 @@ def letter_by_name():
 
         if not internee:
             flash(f"❌ No internee found with name '{name}'", "danger")
+            return redirect(url_for("letter_by_name"))
+
+        # ✅ Check internship end date
+        try:
+            end_date = datetime.strptime(internee["end"], "%Y-%m-%d").date()
+            today = datetime.today().date()
+            if today < end_date:
+                flash(f"⚠️ Letter cannot be generated before internship end date ({end_date})", "warning")
+                return redirect(url_for("letter_by_name"))
+        except Exception:
+            flash("❌ Invalid end date format in record", "danger")
             return redirect(url_for("letter_by_name"))
 
         letters_dir = "letters"
