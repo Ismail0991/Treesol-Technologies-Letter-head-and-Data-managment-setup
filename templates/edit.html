@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edit Internee</title>
+  <title>Edit Staff</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
 
   <!-- Top Branding Bar -->
-  <header class="bg-gradient-to-r from-green-600 to-green-500 text-white shadow-md">
+  <header class="bg-gradient-to-r from-red-600 to-red-500 text-white shadow-md">
     <div class="max-w-5xl mx-auto flex items-center justify-between px-6 py-4">
-      <h1 class="text-xl md:text-2xl font-bold tracking-wide">📋 Internee Management</h1>
+      <h1 class="text-xl md:text-2xl font-bold tracking-wide">📋 Staff Management</h1>
       <a href="{{ url_for('index') }}" 
          class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg shadow transition text-sm font-medium">
         ⬅ Back to Dashboard
@@ -24,11 +24,11 @@
     <div class="bg-white shadow-2xl rounded-2xl w-full max-w-2xl p-8 border border-gray-100 relative overflow-hidden">
 
       <!-- Decorative Circle Background -->
-      <div class="absolute -top-10 -right-10 w-40 h-40 bg-green-100 rounded-full opacity-30"></div>
-      <div class="absolute -bottom-12 -left-12 w-56 h-56 bg-green-50 rounded-full opacity-40"></div>
+      <div class="absolute -top-10 -right-10 w-40 h-40 bg-red-100 rounded-full opacity-30"></div>
+      <div class="absolute -bottom-12 -left-12 w-56 h-56 bg-red-50 rounded-full opacity-40"></div>
 
-      <h2 class="text-2xl font-bold text-green-600 mb-6 flex items-center relative z-10">
-        ✏️ Edit Internee
+      <h2 class="text-2xl font-bold text-red-600 mb-6 flex items-center relative z-10">
+        ✏️ Edit Staff
       </h2>
 
       <form method="POST" class="grid grid-cols-1 gap-5 relative z-10">
@@ -37,7 +37,7 @@
           <label class="block text-gray-700 font-medium mb-1">👤 Name</label>
           <input type="text" name="name" maxlength="25" pattern="[A-Za-z ]+" 
                  value="{{ internee.name }}"
-                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none" required>
         </div>
 
         <!-- Father Name -->
@@ -45,7 +45,7 @@
           <label class="block text-gray-700 font-medium mb-1">👨 Father Name</label>
           <input type="text" name="father" maxlength="25" pattern="[A-Za-z ]+" 
                  value="{{ internee.father }}"
-                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none" required>
         </div>
 
         <!-- CNIC -->
@@ -54,7 +54,7 @@
           <input type="text" name="cnic" maxlength="15" 
                  value="{{ internee.cnic }}" 
                  oninput="formatCNIC(this)"
-                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none" required>
         </div>
 
         <!-- Phone -->
@@ -62,7 +62,7 @@
           <label class="block text-gray-700 font-medium mb-1">📞 Phone</label>
           <input type="text" name="phone" pattern="[0-9]+" 
                  value="{{ internee.phone }}" 
-                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none" required>
         </div>
 
         <!-- Field -->
@@ -70,7 +70,7 @@
           <label class="block text-gray-700 font-medium mb-1">💼 Field</label>
           <input type="text" name="field" maxlength="25" 
                  value="{{ internee.field }}"
-                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none" required>
         </div>
 
         <!-- Start Date -->
@@ -78,7 +78,7 @@
           <label class="block text-gray-700 font-medium mb-1">📅 Start Date</label>
           <input type="date" name="start" 
                  value="{{ internee.start }}" 
-                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none" required>
         </div>
 
         <!-- End Date -->
@@ -86,13 +86,13 @@
           <label class="block text-gray-700 font-medium mb-1">📅 End Date</label>
           <input type="date" name="end" 
                  value="{{ internee.end }}" 
-                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none" required>
         </div>
 
         <!-- Buttons -->
         <div class="flex space-x-3 mt-6">
           <button type="submit" 
-                  class="flex-1 bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 transition font-medium shadow-md">
+                  class="flex-1 bg-red-600 text-white py-2.5 rounded-lg hover:bg-red-700 transition font-medium shadow-md">
             💾 Save Changes
           </button>
           <a href="{{ url_for('index') }}" 
