@@ -1,15 +1,20 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session, abort
 from google.cloud import firestore
-from datetime import datetime
+from datetime import datetime, timedelta
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-import os
+import os, secrets
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
 # Firestore client
 db = firestore.Client.from_service_account_json("traineedata-a1379-8c9c23dd84c8.json")
+
+# -------------------------
+# Invite Token Storage
+# -------------------------
+invite_tokens = {}  # {token: expiry_datetime}
 
 # -------------------------
 # Login System
@@ -40,7 +45,7 @@ def logout():
 # -------------------------
 @app.before_request
 def require_login():
-    allowed_routes = ["login", "static", "letter_by_name"]
+    allowed_routes = ["login", "static", "letter_by_name", "invite_form"]
     if "user" not in session and request.endpoint not in allowed_routes:
         return redirect(url_for("login"))
 
@@ -70,7 +75,45 @@ def index():
     return render_template("index.html", internees=internees)
 
 # -------------------------
-# Add internee
+# Generate secure invite link (valid 10 min)
+# -------------------------
+@app.route("/generate_invite")
+def generate_invite():
+    token = secrets.token_urlsafe(16)
+    expiry = datetime.utcnow() + timedelta(minutes=10)
+    invite_tokens[token] = expiry
+    invite_link = url_for("invite_form", token=token, _external=True)
+    flash(f"🔗 Invite link (valid 10 min): {invite_link}", "success")
+    return redirect(url_for("index"))
+
+@app.route("/invite/<token>", methods=["GET", "POST"])
+def invite_form(token):
+    expiry = invite_tokens.get(token)
+    if not expiry or datetime.utcnow() > expiry:
+        return abort(403, description="❌ This invite link has expired")
+
+    if request.method == "POST":
+        data = {
+            "name": request.form["name"],
+            "father": request.form["father"],
+            "cnic": request.form["cnic"],
+            "phone": request.form["phone"],
+            "field": request.form["field"],
+            "start": request.form["start"],
+            "end": request.form["end"],
+        }
+        db.collection("internees").add(data)
+
+        # Invalidate token after use
+        invite_tokens.pop(token, None)
+
+        flash("✅ Staff data added successfully!", "success")
+        return redirect(url_for("login"))
+
+    return render_template("invite_form.html")
+
+# -------------------------
+# Add internee (Admin only)
 # -------------------------
 @app.route("/add", methods=["POST"])
 def add_internee():
@@ -118,7 +161,7 @@ def delete_internee(id):
     return redirect(url_for("index"))
 
 # -------------------------
-# Generate internship completion letter (PDF) using ReportLab
+# Generate internship completion letter (PDF)
 # -------------------------
 @app.route("/letter/<id>", methods=["POST"])
 def generate_letter(id):
@@ -154,7 +197,7 @@ def generate_letter(id):
     c.drawCentredString(width/2, y, "Internship Completion Letter")
     y -= 50
 
-    # Body Text
+    # Body
     c.setFont("Helvetica", 12)
     text_lines = [
         f"This is to certify that {internee['name']},",
@@ -170,12 +213,11 @@ def generate_letter(id):
         "Warm Regards,",
         "TreeSol Technologies PVT Ltd."
     ]
-
     for line in text_lines:
         c.drawString(margin, y, line)
         y -= 20
 
-    # Footer Image
+    # Footer
     footer_path = "static/s3.png"
     if os.path.exists(footer_path):
         c.drawImage(footer_path, -20, -80, width=width + 20, preserveAspectRatio=True, mask='auto')
@@ -184,7 +226,7 @@ def generate_letter(id):
     return send_file(filepath_pdf, as_attachment=True)
 
 # -------------------------
-# Generate letter by Name (no login required)
+# Letter by Name (Public)
 # -------------------------
 @app.route("/letter_by_name", methods=["GET", "POST"])
 def letter_by_name():
@@ -194,7 +236,6 @@ def letter_by_name():
             flash("❌ Please provide a name!", "danger")
             return redirect(url_for("letter_by_name"))
 
-        # Search Firestore by name
         docs = db.collection("internees").where("name", "==", name).stream()
         internee = None
         for doc in docs:
@@ -205,7 +246,6 @@ def letter_by_name():
             flash(f"❌ No internee found with name '{name}'", "danger")
             return redirect(url_for("letter_by_name"))
 
-        # Generate PDF (reuse same code)
         letters_dir = "letters"
         os.makedirs(letters_dir, exist_ok=True)
         filepath_pdf = os.path.join(letters_dir, f"{internee['name'].replace(' ', '_')}_letter.pdf")
@@ -215,25 +255,21 @@ def letter_by_name():
         margin = 50
         y = height - margin
 
-        # Header Image
         header_path = "static/s4.png"
         if os.path.exists(header_path):
             c.drawImage(header_path, margin - 55, y - 100, width=width + 20, preserveAspectRatio=True, mask='auto')
             y -= 120
 
-        # Stamp Image
         stamp_path = "static/stamp.png"
         if os.path.exists(stamp_path):
             stamp_width = 100
             stamp_height = 100
             c.drawImage(stamp_path, width - stamp_width - 20, 130, width=stamp_width, height=stamp_height, preserveAspectRatio=True, mask='auto')
 
-        # Title
         c.setFont("Helvetica-Bold", 16)
         c.drawCentredString(width/2, y, "Internship Completion Letter")
         y -= 50
 
-        # Body Text
         c.setFont("Helvetica", 12)
         text_lines = [
             f"This is to certify that {internee['name']},",
@@ -249,12 +285,10 @@ def letter_by_name():
             "Warm Regards,",
             "TreeSol Technologies PVT Ltd."
         ]
-
         for line in text_lines:
             c.drawString(margin, y, line)
             y -= 20
 
-        # Footer Image
         footer_path = "static/s3.png"
         if os.path.exists(footer_path):
             c.drawImage(footer_path, -20, -80, width=width + 20, preserveAspectRatio=True, mask='auto')
@@ -262,12 +296,11 @@ def letter_by_name():
         c.save()
         return send_file(filepath_pdf, as_attachment=True)
 
-    return render_template("letter_by_name.html")  # new template with a form to enter name
+    return render_template("letter_by_name.html")
 
 # -------------------------
 # Run Server
 # -------------------------
 from waitress import serve
-
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=8080)
