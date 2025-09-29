@@ -31,7 +31,9 @@
         ✏️ Edit Staff
       </h2>
 
-      <form method="POST" class="grid grid-cols-1 gap-5 relative z-10">
+      <!-- enctype added for file upload -->
+      <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 gap-5 relative z-10">
+        
         <!-- Name -->
         <div>
           <label class="block text-gray-700 font-medium mb-1">👤 Name</label>
@@ -87,6 +89,22 @@
           <input type="date" name="end" 
                  value="{{ internee.end }}" 
                  class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none" required>
+        </div>
+
+        <!-- Profile Image -->
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">🖼️ Profile Image</label>
+          {% if internee.image %}
+        <img src="{{ url_for('uploaded_file', filename=internee.image) }}"
+             alt="{{ internee.name }}"
+             class="w-20 h-20 rounded-full object-cover border shadow">
+      {% else %}
+        <img src="https://via.placeholder.com/80"
+             alt="No Image"
+             class="w-20 h-20 rounded-full object-cover border shadow">
+      {% endif %}
+          <input type="file" name="image" accept="image/*"
+                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
         </div>
 
         <!-- Buttons -->
