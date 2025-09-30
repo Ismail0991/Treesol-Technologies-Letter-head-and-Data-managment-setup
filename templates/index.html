@@ -60,6 +60,10 @@
               <ul id="menuDropdownMobile" class="menu hidden absolute right-0 mt-2 w-40 bg-white text-gray-700 rounded-lg shadow-lg z-50">
                 <li>
                   <a href="{{ url_for('logout') }}" class="block px-4 py-2 hover:bg-red-100 text-red-600 font-medium">Logout</a>
+                  <a href="{{ url_for('generate_invite') }}" 
+                       class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700">
+                       🔗 Staff Link
+                    </a>
                 </li>
               </ul>
             </div>
@@ -328,3 +332,4 @@ document.querySelector("form[action='{{ url_for('add_internee') }}']")
 </script>
 </body>
 </html>
+
