@@ -60,7 +60,7 @@
 
         <div>
           <label class="block text-gray-700 font-medium mb-1">CNIC</label>
-          <input type="text" name="cnic" placeholder="Enter CNIC number" required
+                <input type="text" name="cnic" maxlength="15" placeholder="xxxxx-xxxxxxx-x" required oninput="formatCNIC(this)"
                  class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
         </div>
 
@@ -141,6 +141,17 @@
       profileField.classList.add("hidden");
     }
   });
+
+      function formatCNIC(input) {
+    let value = input.value.replace(/[^0-9]/g, "");
+    if (value.length > 5 && value.length <= 12) {
+      input.value = value.slice(0,5) + "-" + value.slice(5);
+    } else if (value.length > 12) {
+      input.value = value.slice(0,5) + "-" + value.slice(5,12) + "-" + value.slice(12,13);
+    } else {
+      input.value = value;
+    }
+  }
   </script>
 
 </body>
