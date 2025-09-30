@@ -64,7 +64,7 @@ def logout():
 # -------------------------
 @app.before_request
 def require_login():
-    allowed_routes = ["login", "static", "letter_by_name", "invite_form"]
+    allowed_routes = ["login", "static", "letter_by_name", "invite_form", "ping"]
     if "user" not in session and request.endpoint not in allowed_routes:
         return redirect(url_for("login"))
 
@@ -380,6 +380,11 @@ def letter_by_name():
         return send_file(filepath_pdf, as_attachment=True)
 
     return render_template("letter_by_name.html")
+
+@app.route("/ping")
+def ping():
+    return {"status": "ok", "time": datetime.utcnow().isoformat()}
+
 
 # -------------------------
 # Run Server
