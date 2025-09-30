@@ -285,19 +285,19 @@ def generate_letter(id):
 @app.route("/letter_by_name", methods=["GET", "POST"])
 def letter_by_name():
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
+        name = request.form.get("cnic", "").strip()
         if not name:
-            flash("❌ Please provide a name!", "danger")
+            flash("❌ Please provide a CNIC!", "danger")
             return redirect(url_for("letter_by_name"))
 
-        docs = db.collection("internees").where("name", "==", name).stream()
+        docs = db.collection("internees").where("cnic", "==", name).stream()
         internee = None
         for doc in docs:
             internee = doc.to_dict()
             break
 
         if not internee:
-            flash(f"❌ No internee found with name '{name}'", "danger")
+            flash(f"❌ No Staff found with CNIC '{name}'", "danger")
             return redirect(url_for("letter_by_name"))
 
         # ✅ Check internship end date
