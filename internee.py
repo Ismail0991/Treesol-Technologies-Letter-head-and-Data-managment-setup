@@ -99,11 +99,12 @@ def index():
 @app.route("/generate_invite")
 def generate_invite():
     token = secrets.token_urlsafe(16)
-    expiry = datetime.utcnow() + timedelta(minutes=10)
+    expiry = datetime.utcnow() + timedelta(hours=24)   # 24 hours validity
     invite_tokens[token] = expiry
     invite_link = url_for("invite_form", token=token, _external=True)
-    flash(f"🔗 Invite link (valid 10 min): {invite_link}", "success")
+    flash(f"🔗 Invite link (valid 24 hours): {invite_link}", "success")
     return redirect(url_for("index"))
+
 
 @app.route("/invite/<token>", methods=["GET", "POST"])
 def invite_form(token):
