@@ -112,10 +112,18 @@ def invite_form(token):
         return abort(403, description="❌ This invite link has expired")
 
     if request.method == "POST":
+        cnic = request.form["cnic"].strip()
+
+        # 🔎 Check if CNIC already exists
+        existing = db.collection("internees").where("cnic", "==", cnic).stream()
+        if any(existing):
+            flash("⚠️ CNIC already exists! Staff cannot be added again.", "warning")
+            return redirect(url_for("invite_form", token=token))
+
         data = {
             "name": request.form["name"],
             "father": request.form["father"],
-            "cnic": request.form["cnic"],
+            "cnic": cnic,
             "phone": request.form["phone"],
             "field": request.form["field"],
             "start": request.form["start"],
@@ -149,10 +157,18 @@ def invite_form(token):
 # -------------------------
 @app.route("/add", methods=["POST"])
 def add_internee():
+    cnic = request.form["cnic"].strip()
+
+    # 🔎 Check if CNIC already exists
+    existing = db.collection("internees").where("cnic", "==", cnic).stream()
+    if any(existing):
+        flash("⚠️ CNIC already exists! Internee cannot be added again.", "warning")
+        return redirect(url_for("index"))
+
     data = {
         "name": request.form["name"],
         "father": request.form["father"],
-        "cnic": request.form["cnic"],
+        "cnic": cnic,
         "phone": request.form["phone"],
         "field": request.form["field"],
         "start": request.form["start"],
@@ -174,6 +190,7 @@ def add_internee():
     db.collection("internees").add(data)
     flash("✅ Internee Added Successfully!", "success")
     return redirect(url_for("index"))
+
 
 # -------------------------
 # Edit internee
