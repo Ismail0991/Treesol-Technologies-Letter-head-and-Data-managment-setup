@@ -58,15 +58,19 @@
       {% endwith %}
 
       <!-- Generate Letter Form -->
-      <form method="POST" class="space-y-5">
+      <form method="POST" class="space-y-5" onsubmit="showLoading()">
         <div>
           <label class="block text-gray-700 font-medium mb-1">CNIC</label>
-                <input type="text" name="cnic" maxlength="15" placeholder="xxxxx-xxxxxxx-x" required oninput="formatCNIC(this)"
+          <input type="text" name="cnic" maxlength="15" placeholder="xxxxx-xxxxxxx-x" required oninput="formatCNIC(this)"
                  class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
         </div>
-        <button type="submit"
-                class="w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold hover:bg-red-700 shadow-md transition">
-          Generate Letter
+        <button id="generateBtn" type="submit"
+                class="w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold hover:bg-red-700 shadow-md transition flex items-center justify-center">
+          <span id="btnText">Generate Letter</span>
+          <svg id="loadingSpinner" class="hidden ml-2 w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
         </button>
       </form>
 
@@ -82,8 +86,9 @@
       <p class="text-xs text-gray-400 text-center mt-6">© {{ year }} Staff Management System</p>
     </div>
   </div>
+
 <script>
-        function formatCNIC(input) {
+  function formatCNIC(input) {
     let value = input.value.replace(/[^0-9]/g, "");
     if (value.length > 5 && value.length <= 12) {
       input.value = value.slice(0,5) + "-" + value.slice(5);
@@ -92,6 +97,11 @@
     } else {
       input.value = value;
     }
+  }
+
+  function showLoading() {
+    document.getElementById("btnText").textContent = "Generating...";
+    document.getElementById("loadingSpinner").classList.remove("hidden");
   }
 </script>
 </body>
