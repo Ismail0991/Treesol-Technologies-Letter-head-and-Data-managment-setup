@@ -5,3 +5,4 @@ python-docx
 mammoth
 pdfkit 
 reportlab
+cloudinary
