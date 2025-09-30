@@ -83,83 +83,82 @@
           </div>
 
           <!-- Add Internee Form -->
-<div class="bg-white shadow-lg rounded-lg p-6 mt-8 border border-gray-100">
-  <h5 class="text-lg font-semibold mb-4 text-gray-800">➕ Add New Staff</h5>
-  <form method="POST" action="{{ url_for('add_internee') }}" enctype="multipart/form-data" class="grid md:grid-cols-4 gap-4">
+          <div class="bg-white shadow-lg rounded-lg p-6 mt-8 border border-gray-100">
+            <h5 class="text-lg font-semibold mb-4 text-gray-800">➕ Add New Staff</h5>
+            <form method="POST" action="{{ url_for('add_internee') }}" enctype="multipart/form-data" class="grid md:grid-cols-4 gap-4">
 
-    <!-- Name -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">👤 Name</label>
-      <input type="text" name="name" maxlength="25" pattern="[A-Za-z ]+" required
-             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-    </div>
+              <!-- Name -->
+              <div>
+                <label class="block text-gray-700 font-medium mb-1">👤 Name</label>
+                <input type="text" name="name" maxlength="25" pattern="[A-Za-z ]+" required
+                       class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+              </div>
 
-    <!-- Father Name -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">👨 Father Name</label>
-      <input type="text" name="father" maxlength="25" pattern="[A-Za-z ]+" required
-             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-    </div>
+              <!-- Father Name -->
+              <div>
+                <label class="block text-gray-700 font-medium mb-1">👨 Father Name</label>
+                <input type="text" name="father" maxlength="25" pattern="[A-Za-z ]+" required
+                       class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+              </div>
 
-    <!-- CNIC -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">🆔 CNIC</label>
-      <input type="text" name="cnic" maxlength="15" placeholder="xxxxx-xxxxxxx-x" required oninput="formatCNIC(this)"
-             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-    </div>
+              <!-- CNIC -->
+              <div>
+                <label class="block text-gray-700 font-medium mb-1">🆔 CNIC</label>
+                <input type="text" name="cnic" maxlength="15" placeholder="xxxxx-xxxxxxx-x" required oninput="formatCNIC(this)"
+                       class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+              </div>
 
-    <!-- Phone -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">📞 Phone Number</label>
-      <input type="text" name="phone" pattern="[0-9]+" required
-             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-    </div>
+              <!-- Phone -->
+              <div>
+                <label class="block text-gray-700 font-medium mb-1">📞 Phone Number</label>
+                <input type="text" name="phone" pattern="[0-9]+" required
+                       class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+              </div>
 
-    <!-- Field -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">💼 Field</label>
-      <input type="text" name="field" maxlength="25" required
-             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-    </div>
+              <!-- Field -->
+              <div>
+                <label class="block text-gray-700 font-medium mb-1">💼 Field</label>
+                <input type="text" name="field" maxlength="25" required
+                       class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+              </div>
 
-    <!-- Start Date -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">📅 Start Date</label>
-      <input type="date" name="start" required
-             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-    </div>
+              <!-- Start Date -->
+              <div>
+                <label class="block text-gray-700 font-medium mb-1">📅 Start Date</label>
+                <input type="date" name="start" required
+                       class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+              </div>
 
-    <!-- End Date -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">📅 End Date</label>
-      <input type="date" name="end" required
-             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-    </div>
+              <!-- End Date -->
+              <div>
+                <label class="block text-gray-700 font-medium mb-1">📅 End Date</label>
+                <input type="date" name="end" required
+                       class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+              </div>
 
-    <!-- Profile Image Upload -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">🖼️ Profile Image</label>
-      <input type="file" name="image" accept="image/*"
-             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-    </div>
+              <!-- Profile Image Upload -->
+              <div>
+                <label class="block text-gray-700 font-medium mb-1">🖼️ Profile Image</label>
+                <input type="file" name="image" accept="image/*"
+                       class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+              </div>
 
-    <!-- CNIC Image Upload -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">🆔 CNIC Image</label>
-      <input type="file" name="cnic_image" accept="image/*"
-             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-    </div>
+              <!-- CNIC Image Upload -->
+              <div>
+                <label class="block text-gray-700 font-medium mb-1">🆔 CNIC Image</label>
+                <input type="file" name="cnic_image" accept="image/*"
+                       class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+              </div>
 
-    <!-- Submit -->
-    <div class="md:col-span-4">
-      <button type="submit"
-              class="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 transition font-medium shadow-md">
-        ➕ Add
-      </button>
-    </div>
-  </form>
-</div>
-
+              <!-- Submit -->
+              <div class="md:col-span-4">
+                <button type="submit"
+                        class="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 transition font-medium shadow-md">
+                  ➕ Add
+                </button>
+              </div>
+            </form>
+          </div>
 
           <!-- Records Section -->
           <div id="recordsSection" class="mt-8">
@@ -170,54 +169,52 @@
               
               <!-- Card -->
               <div class="bg-white p-4 rounded-lg shadow border border-gray-200 flex-1 search-row">
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
     
-    <!-- Left: Image -->
-    <div class="flex-shrink-0 mr-4">
-      {% if internee.image %}
-        <img src="{{ url_for('uploaded_file', filename=internee.image) }}"
-             alt="{{ internee.name }}"
-             class="w-20 h-20 rounded-full object-cover border shadow">
-      {% else %}
-        <img src="https://via.placeholder.com/80"
-             alt="No Image"
-             class="w-20 h-20 rounded-full object-cover border shadow">
-      {% endif %}
-    </div>
+                  <!-- Left: Image -->
+                  <div class="flex-shrink-0 mr-4">
+                    {% if internee.image %}
+                      <img src="{{ internee.image }}" 
+                           alt="{{ internee.name }}"
+                           class="w-20 h-20 rounded-full object-cover border shadow">
+                    {% else %}
+                      <img src="https://via.placeholder.com/80"
+                           alt="No Image"
+                           class="w-20 h-20 rounded-full object-cover border shadow">
+                    {% endif %}
+                  </div>
 
-    <!-- Middle: Info -->
-    <div class="flex-1 flex flex-wrap gap-x-6 gap-y-2">
-      <p class="font-bold text-lg search-name">{{ internee.name }}</p>
-      <p><span class="font-semibold text-gray-600">👨 Father:</span> {{ internee.father }}</p>
-      <p><span class="font-semibold text-gray-600">🆔 CNIC:</span> {{ internee.cnic }}</p>
-      <p><span class="font-semibold text-gray-600">📞 Phone:</span> {{ internee.phone }}</p>
-      <p><span class="font-semibold text-gray-600">💼 Field:</span> 
-        <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">{{ internee.field }}</span>
-      </p>
-      <p><span class="font-semibold text-gray-600">📅 Start:</span> {{ internee.start }}</p>
-      <p><span class="font-semibold text-gray-600">📅 End:</span> {{ internee.end }}</p>
-    </div>
+                  <!-- Middle: Info -->
+                  <div class="flex-1 flex flex-wrap gap-x-6 gap-y-2">
+                    <p class="font-bold text-lg search-name">{{ internee.name }}</p>
+                    <p><span class="font-semibold text-gray-600">👨 Father:</span> {{ internee.father }}</p>
+                    <p><span class="font-semibold text-gray-600">🆔 CNIC:</span> {{ internee.cnic }}</p>
+                    <p><span class="font-semibold text-gray-600">📞 Phone:</span> {{ internee.phone }}</p>
+                    <p><span class="font-semibold text-gray-600">💼 Field:</span> 
+                      <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">{{ internee.field }}</span>
+                    </p>
+                    <p><span class="font-semibold text-gray-600">📅 Start:</span> {{ internee.start }}</p>
+                    <p><span class="font-semibold text-gray-600">📅 End:</span> {{ internee.end }}</p>
+                  </div>
 
-    <!-- Right: Actions -->
-    <div class="flex flex-col md:flex-row gap-2 mt-3 md:mt-0 md:ml-6">
-  <a href="{{ url_for('edit_internee', id=internee.id) }}" 
-     class="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 text-sm shadow text-center">✏️ Edit</a>
-  <a href="{{ url_for('delete_internee', id=internee.id) }}" 
-     class="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 text-sm shadow text-center">🗑️ Delete</a>
-  <button onclick="openModal('{{ internee.id }}')" 
-          class="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 text-sm shadow">✉️ Letter</button>
-  {% if internee.cnic_image %}
-    <a href="{{ url_for('uploaded_file', filename=internee.cnic_image) }}" 
-       target="_blank" 
-       class="bg-purple-500 text-white px-3 py-2 rounded-md hover:bg-purple-600 text-sm shadow text-center">
-       🆔 Show CNIC
-    </a>
-  {% endif %}
-</div>
-
-  </div>
-</div>
-
+                  <!-- Right: Actions -->
+                  <div class="flex flex-col md:flex-row gap-2 mt-3 md:mt-0 md:ml-6">
+                    <a href="{{ url_for('edit_internee', id=internee.id) }}" 
+                       class="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 text-sm shadow text-center">✏️ Edit</a>
+                    <a href="{{ url_for('delete_internee', id=internee.id) }}" 
+                       class="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 text-sm shadow text-center">🗑️ Delete</a>
+                    <button onclick="openModal('{{ internee.id }}')" 
+                            class="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 text-sm shadow">✉️ Letter</button>
+                    {% if internee.cnic_image %}
+                      <a href="{{ internee.cnic_image }}" 
+                         target="_blank" 
+                         class="bg-purple-500 text-white px-3 py-2 rounded-md hover:bg-purple-600 text-sm shadow text-center">
+                         🆔 Show CNIC
+                      </a>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Modal -->
