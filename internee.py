@@ -64,7 +64,7 @@ def logout():
 # -------------------------
 @app.before_request
 def require_login():
-    allowed_routes = ["login", "static", "letter_by_name", "invite_form", "ping"]
+    allowed_routes = ["login", "static", "letter_by_name", "invite_form"]
     if "user" not in session and request.endpoint not in allowed_routes:
         return redirect(url_for("login"))
 
@@ -232,6 +232,8 @@ def delete_internee(id):
     flash("❌ Internee Deleted Successfully!", "danger")
     return redirect(url_for("index"))
 
+from reportlab.lib.utils import simpleSplit
+
 # -------------------------
 # Generate internship completion letter (PDF)
 # -------------------------
@@ -244,7 +246,9 @@ def generate_letter(id):
 
     letters_dir = "letters"
     os.makedirs(letters_dir, exist_ok=True)
-    filepath_pdf = os.path.join(letters_dir, f"{internee['name'].replace(' ', '_')}_letter.pdf")
+    filepath_pdf = os.path.join(
+        letters_dir, f"{internee['name'].replace(' ', '_')}_letter.pdf"
+    )
 
     c = canvas.Canvas(filepath_pdf, pagesize=A4)
     width, height = A4
@@ -254,48 +258,99 @@ def generate_letter(id):
     # Header Image
     header_path = "static/s4.png"
     if os.path.exists(header_path):
-        c.drawImage(header_path, margin - 55, y - 100, width=width + 20, preserveAspectRatio=True, mask='auto')
+        c.drawImage(
+            header_path,
+            margin - 55,
+            y - 100,
+            width=width + 20,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
         y -= 120
 
     # Stamp Image
     stamp_path = "static/stamp.png"
     if os.path.exists(stamp_path):
-        stamp_width = 100
-        stamp_height = 100
-        c.drawImage(stamp_path, width - stamp_width - 20, 130, width=stamp_width, height=stamp_height, preserveAspectRatio=True, mask='auto')
+        stamp_width = 250
+        stamp_height = 250
+        c.drawImage(
+            stamp_path,
+            width - stamp_width - 20,
+            230,
+            width=stamp_width,
+            height=stamp_height,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
 
-    # Title
+    # Issued On (top left)
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(margin, y, f"ISSUE DATE: {datetime.today().strftime('%d-%m-%Y')}")
+    y -= 40
+
+    # Title (centered)
     c.setFont("Helvetica-Bold", 16)
-    c.drawCentredString(width/2, y, "Internship Completion Letter")
+    c.drawCentredString(width / 2, y, "To whom it may concern")
     y -= 50
 
-    # Body
-    c.setFont("Helvetica", 12)
-    text_lines = [
-        f"This is to certify that {internee['name']},",
-        f"Son/Daughter of {internee['father']},",
-        f"worked as a {internee['field']} Intern at TreeSol Technologies PVT Ltd.",
-        f"from {internee['start']} to {internee['end']}.",
-        "During the internship, he/she demonstrated good skills with a self-motivated attitude",
-        "to learn new things.",
-        "We wish him/her all the best for his/her future endeavors.",
-        "",
-        f"Issued on: {datetime.today().strftime('%d-%m-%Y')}",
-        "",
-        "Warm Regards,",
-        "TreeSol Technologies PVT Ltd."
-    ]
-    for line in text_lines:
-        c.drawString(margin, y, line)
-        y -= 20
+    # Body (wrapped with bold name + field)
+    max_width = width - (2 * margin)
 
-    # Footer
+    segments = [
+        ("normal", "This is to certify that "),
+        ("bold", internee['name']),
+        ("normal", f", son/daughter of {internee['father']}, worked as a "),
+        ("bold", internee['field']),
+        ("normal",
+         f" Intern at TreeSol Technologies PVT Ltd. from {internee['start']} to {internee['end']}. "
+         "During the internship, he/she demonstrated good skills with a self-motivated attitude "
+         "to learn new things. We wish him/her all the best for his/her future endeavors."
+        )
+    ]
+
+    x, current_y = margin, y
+    line_height = 18
+    font_size = 12
+
+    for style, text in segments:
+        if style == "bold":
+            c.setFont("Helvetica-Bold", font_size)
+        else:
+            c.setFont("Helvetica", font_size)
+
+        words = text.split(" ")
+        for word in words:
+            word_width = c.stringWidth(word + " ", c._fontname, font_size)
+            if x + word_width > width - margin:  # wrap to next line
+                current_y -= line_height
+                x = margin
+            c.drawString(x, current_y, word)
+            x += word_width
+
+    y = current_y - 40  # move down after paragraph
+
+    # Warm Regards (left)
+    c.setFont("Helvetica", 12)
+    c.drawString(margin, y, "Warm Regards,")
+
+
+
+
+    # Footer Image
     footer_path = "static/s3.png"
     if os.path.exists(footer_path):
-        c.drawImage(footer_path, -20, -80, width=width + 20, preserveAspectRatio=True, mask='auto')
+        c.drawImage(
+            footer_path,
+            -20,
+            -80,
+            width=width + 20,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
 
     c.save()
     return send_file(filepath_pdf, as_attachment=True)
+
 
 # -------------------------
 # Letter by Name (Public)
@@ -331,59 +386,110 @@ def letter_by_name():
 
         letters_dir = "letters"
         os.makedirs(letters_dir, exist_ok=True)
-        filepath_pdf = os.path.join(letters_dir, f"{internee['name'].replace(' ', '_')}_letter.pdf")
+        filepath_pdf = os.path.join(
+            letters_dir, f"{internee['name'].replace(' ', '_')}_letter.pdf"
+        )
 
         c = canvas.Canvas(filepath_pdf, pagesize=A4)
         width, height = A4
         margin = 50
         y = height - margin
 
+        # ---------------- Header Image ----------------
         header_path = "static/s4.png"
         if os.path.exists(header_path):
-            c.drawImage(header_path, margin - 55, y - 100, width=width + 20, preserveAspectRatio=True, mask='auto')
+            c.drawImage(
+                header_path,
+                margin - 55,
+                y - 100,
+                width=width + 20,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
             y -= 120
 
+        # ---------------- Stamp Image ----------------
         stamp_path = "static/stamp.png"
         if os.path.exists(stamp_path):
-            stamp_width = 100
-            stamp_height = 100
-            c.drawImage(stamp_path, width - stamp_width - 20, 130, width=stamp_width, height=stamp_height, preserveAspectRatio=True, mask='auto')
+            stamp_width = 250
+            stamp_height = 250
+            c.drawImage(
+                stamp_path,
+                width - stamp_width - 20,
+                230,
+                width=stamp_width,
+                height=stamp_height,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
 
+        # ---------------- Issued Date ----------------
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(margin, y, f"ISSUE DATE: {datetime.today().strftime('%d-%m-%Y')}")
+        y -= 40
+
+        # ---------------- Title ----------------
         c.setFont("Helvetica-Bold", 16)
-        c.drawCentredString(width/2, y, "Internship Completion Letter")
+        c.drawCentredString(width / 2, y, "To whom it may concern")
         y -= 50
 
-        c.setFont("Helvetica", 12)
-        text_lines = [
-            f"This is to certify that {internee['name']},",
-            f"Son/Daughter of {internee['father']},",
-            f"worked as a {internee['field']} Intern at TreeSol Technologies PVT Ltd.",
-            f"from {internee['start']} to {internee['end']}.",
-            "During the internship, he/she demonstrated good skills with a self-motivated attitude",
-            "to learn new things.",
-            "We wish him/her all the best for his/her future endeavors.",
-            "",
-            f"Issued on: {datetime.today().strftime('%d-%m-%Y')}",
-            "",
-            "Warm Regards,",
-            "TreeSol Technologies PVT Ltd."
+        # ---------------- Body with Bold Segments ----------------
+        max_width = width - (2 * margin)
+        segments = [
+            ("normal", "This is to certify that "),
+            ("bold", internee["name"]),
+            ("normal", f", son/daughter of {internee['father']}, worked as a "),
+            ("bold", internee["field"]),
+            (
+                "normal",
+                f" Intern at TreeSol Technologies PVT Ltd. from {internee['start']} to {internee['end']}. "
+                "During the internship, he/she demonstrated good skills with a self-motivated attitude "
+                "to learn new things. We wish him/her all the best for his/her future endeavors.",
+            ),
         ]
-        for line in text_lines:
-            c.drawString(margin, y, line)
-            y -= 20
 
+        x, current_y = margin, y
+        line_height = 18
+        font_size = 12
+
+        for style, text in segments:
+            if style == "bold":
+                c.setFont("Helvetica-Bold", font_size)
+            else:
+                c.setFont("Helvetica", font_size)
+
+            words = text.split(" ")
+            for word in words:
+                word_width = c.stringWidth(word + " ", c._fontname, font_size)
+                if x + word_width > width - margin:  # wrap to next line
+                    current_y -= line_height
+                    x = margin
+                c.drawString(x, current_y, word)
+                x += word_width
+
+        y = current_y - 40  # move down after paragraph
+
+        # ---------------- Warm Regards ----------------
+        c.setFont("Helvetica", 12)
+        c.drawString(margin, y, "Warm Regards,")
+        y -= 36  # gap
+
+        # ---------------- Footer Image ----------------
         footer_path = "static/s3.png"
         if os.path.exists(footer_path):
-            c.drawImage(footer_path, -20, -80, width=width + 20, preserveAspectRatio=True, mask='auto')
+            c.drawImage(
+                footer_path,
+                -20,
+                -80,
+                width=width + 20,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
 
         c.save()
         return send_file(filepath_pdf, as_attachment=True)
 
     return render_template("letter_by_name.html")
-
-@app.route("/ping")
-def ping():
-    return {"status": "ok", "time": datetime.utcnow().isoformat()}
 
 
 # -------------------------
