@@ -269,7 +269,7 @@ def generate_letter(id):
         y -= 120
 
     # Stamp Image
-    stamp_path = "static/stamp.png"
+    stamp_path = "static/stamp1.png"
     if os.path.exists(stamp_path):
         stamp_width = 250
         stamp_height = 250
@@ -409,7 +409,7 @@ def letter_by_name():
             y -= 120
 
         # ---------------- Stamp Image ----------------
-        stamp_path = "static/stamp.png"
+        stamp_path = "static/stamp1.png"
         if os.path.exists(stamp_path):
             stamp_width = 250
             stamp_height = 250
