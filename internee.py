@@ -126,6 +126,8 @@ def invite_form(token):
             "father": request.form["father"],
             "cnic": cnic,
             "phone": request.form["phone"],
+            "gender": request.form["gender"],
+
             "field": request.form["field"],
             "start": request.form["start"],
             "end": request.form["end"],
@@ -171,6 +173,8 @@ def add_internee():
         "father": request.form["father"],
         "cnic": cnic,
         "phone": request.form["phone"],
+        "gender": request.form["gender"],
+
         "field": request.form["field"],
         "start": request.form["start"],
         "end": request.form["end"],
@@ -206,6 +210,8 @@ def edit_internee(id):
             "father": request.form["father"],
             "cnic": request.form["cnic"],
             "phone": request.form["phone"],
+            "gender": request.form["gender"],
+
             "field": request.form["field"],
             "start": request.form["start"],
             "end": request.form["end"]
@@ -293,19 +299,39 @@ def generate_letter(id):
     c.drawCentredString(width / 2, y, "To whom it may concern")
     y -= 50
 
+    # ---------------- Gender-based pronouns ----------------
+    gender = internee.get("gender", "").lower()
+    if gender == "male":
+        relation = "son"
+        pronoun_subject = "he"
+        pronoun_object = "him"
+        pronoun_possessive = "his"
+    elif gender == "female":
+        relation = "daughter"
+        pronoun_subject = "she"
+        pronoun_object = "her"
+        pronoun_possessive = "her"
+    else:
+        # default neutral (in case gender not set)
+        relation = "son/daughter"
+        pronoun_subject = "he/she"
+        pronoun_object = "him/her"
+        pronoun_possessive = "his/her"
+
     # Body (wrapped with bold name + field)
     max_width = width - (2 * margin)
 
     segments = [
         ("normal", "This is to certify that "),
         ("bold", internee['name']),
-        ("normal", f", son/daughter of {internee['father']}, worked as a "),
+        ("normal", f", {relation} of {internee['father']}, worked as a "),
         ("bold", internee['field']),
-        ("normal",
-         f" Intern at TreeSol Technologies PVT Ltd. from {internee['start']} to {internee['end']}. "
-         "During the internship, he/she demonstrated good skills with a self-motivated attitude "
-         "to learn new things. We wish him/her all the best for his/her future endeavors."
-        )
+        (
+            "normal",
+            f" Intern at TreeSol Technologies PVT Ltd. from {internee['start']} to {internee['end']}. "
+            f"During the internship, {pronoun_subject} demonstrated good skills with a self-motivated attitude "
+            f"to learn new things. We wish {pronoun_object} all the best for {pronoun_possessive} future endeavors."
+        ),
     ]
 
     x, current_y = margin, y
@@ -333,9 +359,6 @@ def generate_letter(id):
     c.setFont("Helvetica", 12)
     c.drawString(margin, y, "Warm Regards,")
 
-
-
-
     # Footer Image
     footer_path = "static/s3.png"
     if os.path.exists(footer_path):
@@ -350,6 +373,7 @@ def generate_letter(id):
 
     c.save()
     return send_file(filepath_pdf, as_attachment=True)
+
 
 
 # -------------------------
@@ -433,18 +457,36 @@ def letter_by_name():
         c.drawCentredString(width / 2, y, "To whom it may concern")
         y -= 50
 
+        # ---------------- Gender-based pronouns ----------------
+        gender = internee.get("gender", "").lower()
+        if gender == "male":
+            relation = "son"
+            pronoun_subject = "he"
+            pronoun_object = "him"
+            pronoun_possessive = "his"
+        elif gender == "female":
+            relation = "daughter"
+            pronoun_subject = "she"
+            pronoun_object = "her"
+            pronoun_possessive = "her"
+        else:
+            relation = "son/daughter"
+            pronoun_subject = "he/she"
+            pronoun_object = "him/her"
+            pronoun_possessive = "his/her"
+
         # ---------------- Body with Bold Segments ----------------
         max_width = width - (2 * margin)
         segments = [
             ("normal", "This is to certify that "),
             ("bold", internee["name"]),
-            ("normal", f", son/daughter of {internee['father']}, worked as a "),
+            ("normal", f", {relation} of {internee['father']}, worked as a "),
             ("bold", internee["field"]),
             (
                 "normal",
                 f" Intern at TreeSol Technologies PVT Ltd. from {internee['start']} to {internee['end']}. "
-                "During the internship, he/she demonstrated good skills with a self-motivated attitude "
-                "to learn new things. We wish him/her all the best for his/her future endeavors.",
+                f"During the internship, {pronoun_subject} demonstrated good skills with a self-motivated attitude "
+                f"to learn new things. We wish {pronoun_object} all the best for {pronoun_possessive} future endeavors.",
             ),
         ]
 
@@ -490,6 +532,7 @@ def letter_by_name():
         return send_file(filepath_pdf, as_attachment=True)
 
     return render_template("letter_by_name.html")
+
 
 
 # -------------------------
