@@ -104,6 +104,16 @@
                 <input type="text" name="father" maxlength="25" pattern="[A-Za-z ]+" required
                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
               </div>
+<!-- Gender -->
+<div>
+  <label class="block text-gray-700 font-medium mb-1">👩🏻‍🤝‍🧑🏻 Gender</label>
+  <select name="gender" required
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+    <option value="">-- Select Gender --</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+  </select>
+</div>
 
               <!-- CNIC -->
               <div>
@@ -332,4 +342,3 @@ document.querySelector("form[action='{{ url_for('add_internee') }}']")
 </script>
 </body>
 </html>
-
