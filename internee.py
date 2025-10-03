@@ -224,7 +224,7 @@ def edit_internee(id):
             update_data["image"] = upload_result["secure_url"]
 
         doc_ref.update(update_data)
-        flash("✅ Internee Updated Successfully!", "success")
+        flash("✅ Staff Updated Successfully!", "success")
         return redirect(url_for("index"))
 
     return render_template("edit.html", internee=data, id=id)
@@ -235,7 +235,7 @@ def edit_internee(id):
 @app.route("/delete/<id>")
 def delete_internee(id):
     db.collection("internees").document(id).delete()
-    flash("❌ Internee Deleted Successfully!", "danger")
+    flash("❌ Staff Deleted Successfully!", "danger")
     return redirect(url_for("index"))
 
 from reportlab.lib.utils import simpleSplit
@@ -247,7 +247,7 @@ from reportlab.lib.utils import simpleSplit
 def generate_letter(id):
     internee = db.collection("internees").document(id).get().to_dict()
     if not internee:
-        flash("❌ Internee not found!", "danger")
+        flash("❌ Staff not found!", "danger")
         return redirect(url_for("index"))
 
     letters_dir = "letters"
@@ -541,3 +541,4 @@ def letter_by_name():
 from waitress import serve
 if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=8080)
+
